@@ -21,7 +21,7 @@ import frc.robot.utilities.drive.RobotPhysics;
 import frc.robot.utilities.motor.BeakTalonSRX;
 
 /** Add your docs here. */
-public class CIMDrivetrain extends BeakDifferentialDrivetrain {
+public class Drivetrain extends BeakDifferentialDrivetrain {
     private Field2d field = new Field2d();
 
     private BeakTalonSRX m_FL, m_BL, m_FR, m_BR;
@@ -58,9 +58,9 @@ public class CIMDrivetrain extends BeakDifferentialDrivetrain {
             GEAR_RATIO,
             FEED_FORWARD);
 
-    private static CIMDrivetrain m_instance;
+    private static Drivetrain m_instance;
 
-    public CIMDrivetrain() {
+    public Drivetrain() {
         super(
             PHYSICS,
             PIDConstants.Theta.gains
@@ -149,9 +149,9 @@ public class CIMDrivetrain extends BeakDifferentialDrivetrain {
         m_BR.resetEncoder();
     }
 
-    public static CIMDrivetrain getInstance() {
+    public static Drivetrain getInstance() {
         if (m_instance == null) {
-            m_instance = new CIMDrivetrain();
+            m_instance = new Drivetrain();
         }
         return m_instance;
     }
