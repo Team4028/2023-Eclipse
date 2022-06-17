@@ -4,53 +4,106 @@
 
 package frc.robot.subsystems;
 
-import com.ctre.phoenix.motorcontrol.NeutralMode;
-import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+import com.ctre.phoenix.motorcontrol.FeedbackDevice;
+import com.kauailabs.navx.frc.AHRS;
 
-import edu.wpi.first.wpilibj.drive.DifferentialDrive;
-import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
+import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
+import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.SPI;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.Constants.PIDConstants;
+import frc.robot.utilities.drive.BeakDifferentialDrivetrain;
+import frc.robot.utilities.drive.RobotPhysics;
+import frc.robot.utilities.motor.BeakTalonSRX;
 
-public class Drivetrain extends SubsystemBase {
-    private WPI_TalonSRX m_FL, m_BL, m_FR, m_BR;
+/** Add your docs here. */
+public class CIMDrivetrain extends BeakDifferentialDrivetrain {
+    private Field2d field = new Field2d();
 
-    private MotorControllerGroup m_left, m_right;
+    private BeakTalonSRX m_FL, m_BL, m_FR, m_BR;
 
-    private DifferentialDrive m_drive;
+    private static final double kP = 0.05;
+    private static final double kD = 0.0;
 
-    private static Drivetrain m_instance = new Drivetrain();
+    private static final int FL_ID = 1;
+    private static final int BL_ID = 2;
+    private static final int FR_ID = 3;
+    private static final int BR_ID = 4;
 
-    /* Config and initialization */
-    public Drivetrain() {
-        m_FL = new WPI_TalonSRX(1);
-        m_BL = new WPI_TalonSRX(2);
-        m_FR = new WPI_TalonSRX(3);
-        m_BR = new WPI_TalonSRX(4);
+    private static final double MAX_VELOCITY = Units.feetToMeters(15.0);
+
+    // distance from the right to left wheels on the robot
+    private static final double TRACK_WIDTH = 24;
+    // distance from the front to back wheels on the robot
+    private static final double WHEEL_BASE = 25;
+
+    private static final double WHEEL_DIAMETER = 6.258;
+    private static final double GEAR_RATIO = 7.5;
+
+    private static final SimpleMotorFeedforward FEED_FORWARD = new SimpleMotorFeedforward(
+            1.1161,
+            .17294,
+            0.087223);
+    
+    private static final RobotPhysics PHYSICS = new RobotPhysics(
+            MAX_VELOCITY,
+            0,
+            TRACK_WIDTH,
+            WHEEL_BASE,
+            WHEEL_DIAMETER,
+            GEAR_RATIO,
+            FEED_FORWARD);
+
+    private static CIMDrivetrain m_instance;
+
+    public CIMDrivetrain() {
+        super(
+            PHYSICS,
+            PIDConstants.Theta.gains
+        );
+
+        m_gyro = new AHRS(SPI.Port.kMXP);
+
+        m_odom = new DifferentialDriveOdometry(getGyroRotation2d());
+
+        m_FL = new BeakTalonSRX(FL_ID);
+        m_BL = new BeakTalonSRX(BL_ID);
+        m_FR = new BeakTalonSRX(FR_ID);
+        m_BR = new BeakTalonSRX(BR_ID);
+
+        m_FL.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative);
+        m_FR.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative);
+        //m_BL.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative);
+        //m_BR.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative);
 
         m_BL.follow(m_FL);
         m_BR.follow(m_FR);
 
         configMotors();
-
-        m_left = new MotorControllerGroup(m_FL, m_BL);
-        m_right = new MotorControllerGroup(m_FR, m_BR);
-
-        m_drive = new DifferentialDrive(
-            m_left,
-            m_right
-        );
     }
 
     public void configMotors() {
+        configPID();
         configNeutralMode();
         configInverted();
     }
 
+    public void configPID() {
+        m_FL.setPIDF(kP, 0., kD, /*0.044*/0., 0);
+        m_BL.setPIDF(kP, 0., kD, /*0.044*/0., 0);
+        m_FR.setPIDF(kP, 0., kD, /*0.044*/0., 0);
+        m_BR.setPIDF(kP, 0., kD, /*0.044*/0., 0);
+    }
+
     public void configNeutralMode() {
-        m_FL.setNeutralMode(NeutralMode.Coast);
-        m_BL.setNeutralMode(NeutralMode.Coast);
-        m_FR.setNeutralMode(NeutralMode.Coast);
-        m_BR.setNeutralMode(NeutralMode.Coast);
+        m_FL.setBrake(false);
+        m_BL.setBrake(false);
+        m_FR.setBrake(false);
+        m_BR.setBrake(false);
     }
 
     public void configInverted() {
@@ -60,22 +113,54 @@ public class Drivetrain extends SubsystemBase {
         m_BR.setInverted(false);
     }
 
-    public void drive(double x, double rot) {
-        System.out.println(x);
-        m_drive.arcadeDrive(x, rot);
+    
+    public void drive(double x, double y, double rot) {
+        DifferentialDriveWheelSpeeds speeds = calcWheelSpeeds(x, rot);
+
+        double[] velocities = calcDesiredMotorVelocities(m_FL, x, rot);
+
+        // m_FL.setVelocityNU(velocities[0]);
+        // System.out.println(FEED_FORWARD.calculate(speeds.leftMetersPerSecond));
+        m_FL.setVelocityNU(velocities[0], FEED_FORWARD.calculate(speeds.leftMetersPerSecond) / 12.0, 0);
+        m_FR.setVelocityNU(velocities[1], FEED_FORWARD.calculate(speeds.rightMetersPerSecond) / 12.0, 0);
+
+        System.out.println(m_FL.getMotorOutputVoltage());
+        // m_FL.set(x);
+        // m_FR.set(rot);
         // m_FL.set(0.7 * x - 0.3 * rot);
         // m_FR.set(0.7 * x + 0.3 * rot);
     }
 
-    public static Drivetrain getInstance() {
+    public void driveVolts(double left, double right) {
+        m_FL.setVoltage(left);
+        m_FR.setVoltage(right);
+    }
+
+    public DifferentialDriveWheelSpeeds getWheelSpeeds() {
+        return super.getWheelSpeeds(m_FL, m_FR);
+    }
+
+    public void resetOdometry(Pose2d pose) {
+        super.resetOdometry(pose);
+        
+        m_FL.resetEncoder();
+        m_BL.resetEncoder();
+        m_FR.resetEncoder();
+        m_BR.resetEncoder();
+    }
+
+    public static CIMDrivetrain getInstance() {
         if (m_instance == null) {
-            m_instance = new Drivetrain();
+            m_instance = new CIMDrivetrain();
         }
         return m_instance;
     }
 
     @Override
     public void periodic() {
-        // This method will be called once per scheduler run
+        updateOdometry(m_FL, m_FR);
+
+        field.setRobotPose(m_pose);
+        SmartDashboard.putData(field);
     }
 }
