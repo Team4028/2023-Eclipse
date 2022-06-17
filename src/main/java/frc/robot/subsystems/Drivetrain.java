@@ -124,7 +124,7 @@ public class Drivetrain extends BeakDifferentialDrivetrain {
         m_FL.setVelocityNU(velocities[0], FEED_FORWARD.calculate(speeds.leftMetersPerSecond) / 12.0, 0);
         m_FR.setVelocityNU(velocities[1], FEED_FORWARD.calculate(speeds.rightMetersPerSecond) / 12.0, 0);
 
-        System.out.println(m_FL.getMotorOutputVoltage());
+        // System.out.println(m_FL.getMotorOutputVoltage());
         // m_FL.set(x);
         // m_FR.set(rot);
         // m_FL.set(0.7 * x - 0.3 * rot);
