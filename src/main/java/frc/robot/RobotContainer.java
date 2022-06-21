@@ -11,9 +11,14 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import frc.robot.Constants.OIConstants;
-import frc.robot.auton.BeakAutonCommand;
-import frc.robot.auton.TestPath;
-import frc.robot.infeed.ZeroSwitchblade;
+import frc.robot.commands.auton.BeakAutonCommand;
+import frc.robot.commands.auton.TestPath;
+import frc.robot.commands.carriage.RunCarriageIn;
+import frc.robot.commands.carriage.RunCarriageOut;
+import frc.robot.commands.infeed.RunInfeed;
+import frc.robot.commands.infeed.RunOutfeed;
+import frc.robot.commands.infeed.ZeroSwitchblade;
+import frc.robot.subsystems.Carriage;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Infeed;
 import frc.robot.utilities.BeakXBoxController;
@@ -24,6 +29,7 @@ public class RobotContainer {
 
     private Drivetrain m_drive = Drivetrain.getInstance();
     private Infeed m_infeed = Infeed.getInstance();
+    private Carriage m_carriage = Carriage.getInstance();
 
     private static RobotContainer _instance = new RobotContainer();
 
@@ -43,18 +49,28 @@ public class RobotContainer {
 
     public void configureButtonBindings() {
         System.out.println("Bruh3");
+
+        m_driverController.start.whenPressed(() -> {
+            m_infeed.stop();
+            m_carriage.stop();
+        });
+
+        m_driverController.a.whenPressed(new ZeroSwitchblade(m_infeed));
+        m_driverController.b.whenPressed(() -> m_infeed.runToPosition());
+
+        m_driverController.lt.whenHeld(new RunCarriageIn(m_carriage));
+        m_driverController.lt.whenHeld(new RunInfeed(m_infeed));
+
+        m_driverController.lb.toggleWhenPressed(new RunCarriageOut(m_carriage));
+        m_driverController.lb.toggleWhenPressed(new RunOutfeed(m_infeed));
+
+
         m_drive.setDefaultCommand(
                 new RunCommand(() -> m_drive.drive(
                         driveXLimiter.calculate(m_driverController.getLeftYAxis()),
                         0,
                         driveRotLimiter.calculate(-m_driverController.getRightXAxis())),
-                        m_drive
-                    ));
-        
-        m_driverController.a.whenPressed(new ZeroSwitchblade(m_infeed));
-        // m_driverController.b.whenPressed(() -> m_infeed.wideInfeed());
-        m_driverController.b.whenPressed(() -> m_infeed.runToPosition());
-
+                        m_drive));
     }
 
     private void initAutonChooser() {
@@ -74,15 +90,15 @@ public class RobotContainer {
     }
 
     // public double speedScaledDriverLeftY() {
-    //     return Util.speedScale(m_driverController.getLeftYAxis(),
-    //             0.25,
-    //             m_driverController.getRightTrigger());
+    // return Util.speedScale(m_driverController.getLeftYAxis(),
+    // 0.25,
+    // m_driverController.getRightTrigger());
     // }
 
     // public double speedScaledDriverRightX() {
-    //     return -Util.speedScale(m_driverController.getRightXAxis(),
-    //             0.25,
-    //             m_driverController.getRightTrigger());
+    // return -Util.speedScale(m_driverController.getRightXAxis(),
+    // 0.25,
+    // m_driverController.getRightTrigger());
     // }
 
     public static RobotContainer getInstance() {

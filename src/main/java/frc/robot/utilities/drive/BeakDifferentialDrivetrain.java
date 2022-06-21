@@ -14,9 +14,9 @@ import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
-import frc.robot.Robot;
-import frc.robot.utilities.Util;
+
 import frc.robot.utilities.motor.BeakMotorController;
 
 /** Generic Differential (Tank) Drivetrain subsystem. */
@@ -105,7 +105,11 @@ public class BeakDifferentialDrivetrain extends BeakDrivetrain {
      * @param x               Speed of the robot in the x direction (forward).
      * @param rot             Angular rate of the robot.
      * @return {left velocity in NU, right velocity in NU}
+     * 
+     * @deprecated Due to the addition of <code>setRate</code> on {@link BeakMotorController},
+     * this function is no longer needed. Please use <code>calcWheelSpeeds()</code> and <code>setRate()</code>.
      */
+    @Deprecated(forRemoval = true)
     public double[] calcDesiredMotorVelocities(
             BeakMotorController motorController,
             double x,
@@ -140,10 +144,8 @@ public class BeakDifferentialDrivetrain extends BeakDrivetrain {
      */
     public DifferentialDriveWheelSpeeds getWheelSpeeds(BeakMotorController frontLeft, BeakMotorController frontRight) {
         return new DifferentialDriveWheelSpeeds(
-                Util.NUtoMeters(frontLeft.getVelocityNU(), frontLeft.getVelocityEncoderCPR(), m_gearRatio,
-                        m_wheelDiameter),
-                Util.NUtoMeters(frontRight.getVelocityNU(), frontRight.getVelocityEncoderCPR(), m_gearRatio,
-                        m_wheelDiameter));
+            frontLeft.getRate(),
+            frontRight.getRate());
     }
 
     /**
@@ -171,7 +173,7 @@ public class BeakDifferentialDrivetrain extends BeakDrivetrain {
     public Pose2d updateOdometry(
             BeakMotorController frontLeftMotorController,
             BeakMotorController frontRightMotorController) {
-        if (Robot.isSimulation()) {
+        if (TimedRobot.isSimulation()) {
             sim.setInputs(
                     frontRightMotorController.getOutputVoltage(),
                     frontLeftMotorController.getOutputVoltage());
@@ -182,12 +184,8 @@ public class BeakDifferentialDrivetrain extends BeakDrivetrain {
         Rotation2d rot = getGyroRotation2d();
 
         m_pose = m_odom.update(rot,
-                Util.NUtoMeters(frontLeftMotorController.getPositionNU(),
-                        frontLeftMotorController.getPositionEncoderCPR(), m_gearRatio,
-                        m_wheelDiameter),
-                Util.NUtoMeters(frontRightMotorController.getPositionNU(),
-                        frontRightMotorController.getPositionEncoderCPR(), m_gearRatio,
-                        m_wheelDiameter));
+                frontLeftMotorController.getDistance(),
+                frontRightMotorController.getDistance());
 
         return m_pose;
     }

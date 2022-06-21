@@ -83,6 +83,9 @@ public class Drivetrain extends BeakDifferentialDrivetrain {
         m_BL.follow(m_FL);
         m_BR.follow(m_FR);
 
+        m_FL.setDistancePerPulse(m_wheelDiameter, 1);
+        m_FR.setDistancePerPulse(m_wheelDiameter, 1);
+
         configMotors();
     }
 
@@ -117,12 +120,14 @@ public class Drivetrain extends BeakDifferentialDrivetrain {
     public void drive(double x, double y, double rot) {
         DifferentialDriveWheelSpeeds speeds = calcWheelSpeeds(x, rot);
 
-        double[] velocities = calcDesiredMotorVelocities(m_FL, x, rot);
+        // double[] velocities = calcDesiredMotorVelocities(m_FL, x, rot);
 
         // m_FL.setVelocityNU(velocities[0]);
         // System.out.println(FEED_FORWARD.calculate(speeds.leftMetersPerSecond));
-        m_FL.setVelocityNU(velocities[0], FEED_FORWARD.calculate(speeds.leftMetersPerSecond) / 12.0, 0);
-        m_FR.setVelocityNU(velocities[1], FEED_FORWARD.calculate(speeds.rightMetersPerSecond) / 12.0, 0);
+        // m_FL.setVelocityNU(velocities[0], FEED_FORWARD.calculate(speeds.leftMetersPerSecond) / 12.0, 0);
+        // m_FR.setVelocityNU(velocities[1], FEED_FORWARD.calculate(speeds.rightMetersPerSecond) / 12.0, 0);
+        m_FL.setRate(speeds.leftMetersPerSecond, FEED_FORWARD.calculate(speeds.leftMetersPerSecond) / 12.0);
+        m_FR.setRate(speeds.rightMetersPerSecond, FEED_FORWARD.calculate(speeds.rightMetersPerSecond) / 12.0);
 
         // System.out.println(m_FL.getMotorOutputVoltage());
         // m_FL.set(x);

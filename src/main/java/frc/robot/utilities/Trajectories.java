@@ -2,10 +2,12 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot.utilities.drive;
+package frc.robot.utilities;
 
 import com.pathplanner.lib.PathPlanner;
 import com.pathplanner.lib.PathPlannerTrajectory;
+
+import frc.robot.utilities.drive.BeakDrivetrain;
 
 /** Get auton trajectories from paths. */
 public class Trajectories {

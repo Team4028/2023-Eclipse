@@ -20,12 +20,14 @@ public class Infeed extends SubsystemBase {
     private BeakTalonSRX m_rightInfeed, m_leftInfeed;
     private BeakTalonSRX m_rightSwitchblade, m_leftSwitchblade;
 
+    private boolean m_homing = false;
+
     private static Infeed m_instance;
 
     public enum InfeedTargetState {
         NONE(0),
         WIDE(140),
-        INFEED(200),
+        INFEED(190),
         STORE(30);
 
         int value;
@@ -53,7 +55,7 @@ public class Infeed extends SubsystemBase {
         m_rightInfeed.restoreFactoryDefault();
         m_leftInfeed.restoreFactoryDefault();
 
-        m_rightInfeed.setInverted(true);
+        m_rightInfeed.setInverted(false);
         m_leftInfeed.setInverted(true);
     }
 
@@ -64,8 +66,10 @@ public class Infeed extends SubsystemBase {
         m_rightSwitchblade.setReverseLimitSwitchNormallyClosed(true);
         m_leftSwitchblade.setReverseLimitSwitchNormallyClosed(true);
 
-        // m_rightSwitchblade.configReverseLimitSwitchSource(LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyClosed);
-        // m_leftSwitchblade.configReverseLimitSwitchSource(LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyClosed);
+        // m_rightSwitchblade.configReverseLimitSwitchSource(LimitSwitchSource.FeedbackConnector,
+        // LimitSwitchNormal.NormallyClosed);
+        // m_leftSwitchblade.configReverseLimitSwitchSource(LimitSwitchSource.FeedbackConnector,
+        // LimitSwitchNormal.NormallyClosed);
 
         m_rightSwitchblade.setBrake(true);
         m_leftSwitchblade.setBrake(true);
@@ -73,8 +77,11 @@ public class Infeed extends SubsystemBase {
         m_rightSwitchblade.setInverted(true);
         m_leftSwitchblade.setInverted(false);
 
-        m_rightSwitchblade.setPIDF(0.4, 0, 5., 0, 0);
-        m_leftSwitchblade.setPIDF(0.4, 0, 5., 0, 0);
+        m_rightSwitchblade.setPIDF(0.6, 0, 5., 0, 0);
+        m_leftSwitchblade.setPIDF(0.6, 0, 5., 0, 0);
+
+        m_rightSwitchblade.setAllowedClosedLoopError(10., 0);
+        m_leftSwitchblade.setAllowedClosedLoopError(10., 0);
     }
 
     public void runToPosition() {
@@ -88,15 +95,13 @@ public class Infeed extends SubsystemBase {
             default:
                 m_infeedTargetState = InfeedTargetState.WIDE;
                 break;
-        }
-
-        m_rightSwitchblade.setPositionNU(m_infeedTargetState.value * NU_PER_DEG);
-        m_leftSwitchblade.setPositionNU(m_infeedTargetState.value * NU_PER_DEG);
-    }
+        }    }
 
     public void zeroSwitchblades() {
         m_rightSwitchblade.set(-0.2);
         m_leftSwitchblade.set(-0.2);
+
+        m_homing = true;
     }
 
     public void zeroSwitchbladeEncoders() {
@@ -107,6 +112,8 @@ public class Infeed extends SubsystemBase {
     public void stopSwitchblades() {
         m_rightSwitchblade.stop();
         m_leftSwitchblade.stop();
+        
+        m_homing = false;
     }
 
     public boolean getLeftLimitSwitch() {
@@ -115,6 +122,22 @@ public class Infeed extends SubsystemBase {
 
     public boolean getRightLimitSwitch() {
         return !m_rightSwitchblade.getReverseLimitSwitch();
+    }
+
+    public void runInfeed() {
+        m_leftInfeed.set(0.5);
+        m_rightInfeed.set(0.5);
+    }
+
+    public void runOutfeed() {
+        m_leftInfeed.set(-0.5);
+        m_rightInfeed.set(-0.5);
+    }
+
+    public void stop() {
+        stopSwitchblades();
+        m_leftInfeed.stopMotor();
+        m_rightInfeed.stopMotor();
     }
 
     public static Infeed getInstance() {
@@ -127,5 +150,9 @@ public class Infeed extends SubsystemBase {
     @Override
     public void periodic() {
         // This method will be called once per scheduler run
+        if (m_infeedTargetState != InfeedTargetState.NONE && !m_homing) {
+            m_rightSwitchblade.setPositionNU(m_infeedTargetState.value * NU_PER_DEG);
+            m_leftSwitchblade.setPositionNU(m_infeedTargetState.value * NU_PER_DEG);
+        }
     }
 }
