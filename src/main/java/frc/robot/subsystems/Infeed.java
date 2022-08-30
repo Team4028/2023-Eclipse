@@ -77,8 +77,8 @@ public class Infeed extends SubsystemBase {
         m_rightSwitchblade.setInverted(true);
         m_leftSwitchblade.setInverted(false);
 
-        m_rightSwitchblade.setPIDF(0.6, 0, 5., 0, 0);
-        m_leftSwitchblade.setPIDF(0.6, 0, 5., 0, 0);
+        m_rightSwitchblade.setPIDF(0.5, 0, 5., 0, 0);
+        m_leftSwitchblade.setPIDF(0.5, 0, 5., 0, 0);
 
         m_rightSwitchblade.setAllowedClosedLoopError(10., 0);
         m_leftSwitchblade.setAllowedClosedLoopError(10., 0);

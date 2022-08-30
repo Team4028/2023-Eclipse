@@ -220,13 +220,11 @@ public class BeakTalonSRX extends WPI_TalonSRX implements BeakMotorController {
 
     @Override
     public void setMotionMagicAcceleration(double accel, int slot) {
-        setSlot(slot);
         super.configMotionAcceleration(accel);
     }
 
     @Override
     public void setMotionMagicCruiseVelocity(double velocity, int slot) {
-        setSlot(slot);
         super.configMotionCruiseVelocity(velocity);
     }
 

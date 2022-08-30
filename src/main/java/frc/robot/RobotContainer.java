@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.StartEndCommand;
 import frc.robot.Constants.OIConstants;
 import frc.robot.commands.auton.BeakAutonCommand;
 import frc.robot.commands.auton.TestPath;
@@ -20,6 +21,7 @@ import frc.robot.commands.infeed.RunOutfeed;
 import frc.robot.commands.infeed.ZeroSwitchblade;
 import frc.robot.subsystems.Carriage;
 import frc.robot.subsystems.Drivetrain;
+import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Infeed;
 import frc.robot.utilities.BeakXBoxController;
 
@@ -30,6 +32,7 @@ public class RobotContainer {
     private Drivetrain m_drive = Drivetrain.getInstance();
     private Infeed m_infeed = Infeed.getInstance();
     private Carriage m_carriage = Carriage.getInstance();
+    private Elevator m_elevator = Elevator.getInstance();
 
     private static RobotContainer _instance = new RobotContainer();
 
@@ -64,6 +67,12 @@ public class RobotContainer {
         m_driverController.lb.toggleWhenPressed(new RunCarriageOut(m_carriage));
         m_driverController.lb.toggleWhenPressed(new RunOutfeed(m_infeed));
 
+        m_driverController.x.toggleWhenPressed(new StartEndCommand(
+            () -> m_elevator.runElevatorUp(),
+            () -> m_elevator.stop(),
+            m_elevator));
+        
+        m_driverController.y.whenPressed(() -> m_elevator.runToPos(), m_elevator);
 
         m_drive.setDefaultCommand(
                 new RunCommand(() -> m_drive.drive(
