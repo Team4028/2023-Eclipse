@@ -4,9 +4,9 @@
 
 package frc.robot.subsystems;
 
-import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.utilities.motor.BeakTalonSRX;
 
@@ -69,7 +69,7 @@ public class Elevator extends SubsystemBase {
         m_elevatorMotor.setPIDF(DOWN_GAINS[0], DOWN_GAINS[1], DOWN_GAINS[2], DOWN_GAINS[3], DOWN_SLOT);
     }
 
-    public void runToPos() {
+    public void runToPosition() {
         // m_elevatorMotor.setMotionMagicNU(30 * NU_PER_INCH, UP_SLOT);
         switch (m_targetPresetPosition) {
             case HOME:
@@ -86,15 +86,11 @@ public class Elevator extends SubsystemBase {
         }
 
         m_targetPosition = m_targetPresetPosition.value;
-        System.out.println(m_targetPosition);
-    }
-
-    public void runElevatorUp() {
-        m_elevatorMotor.set(0.4);
     }
 
     public void bumpUp(boolean big) {
         m_targetPosition += big ? BIG_BUMP : SMALL_BUMP;
+        System.out.println(m_targetPosition);
     }
 
     public void bumpDown(boolean big) {
@@ -115,6 +111,7 @@ public class Elevator extends SubsystemBase {
 
     @Override
     public void periodic() {
+        m_targetPosition = MathUtil.clamp(m_targetPosition, 0, 80); // FIXME: find max height.
         m_elevatorMotor.setMotionMagicNU(m_targetPosition * NU_PER_INCH, m_slot);
         // This method will be called once per scheduler run
     }

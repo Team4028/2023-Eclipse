@@ -16,6 +16,7 @@ import frc.robot.commands.auton.BeakAutonCommand;
 import frc.robot.commands.auton.TestPath;
 import frc.robot.commands.carriage.RunCarriageIn;
 import frc.robot.commands.carriage.RunCarriageOut;
+import frc.robot.commands.elevator.BumpElevatorDown;
 import frc.robot.commands.elevator.BumpElevatorUp;
 import frc.robot.commands.elevator.RunElevator;
 import frc.robot.commands.infeed.RunInfeed;
@@ -46,20 +47,12 @@ public class RobotContainer {
     public RobotContainer() {
         driveXLimiter = new SlewRateLimiter(4.0);
         driveRotLimiter = new SlewRateLimiter(4.0);
-        System.out.println("bruh");
 
         configureButtonBindings();
         initAutonChooser();
     }
 
     public void configureButtonBindings() {
-        System.out.println("Bruh3");
-
-        m_driverController.start.whenPressed(() -> {
-            m_infeed.stop();
-            m_carriage.stop();
-        });
-
         m_driverController.a.whenPressed(new ZeroSwitchblade(m_infeed));
         m_driverController.b.whenPressed(() -> m_infeed.runToPosition());
 
@@ -69,14 +62,10 @@ public class RobotContainer {
         m_driverController.lb.toggleWhenPressed(new RunCarriageOut(m_carriage));
         m_driverController.lb.toggleWhenPressed(new RunOutfeed(m_infeed));
 
-        m_driverController.x.toggleWhenPressed(new StartEndCommand(
-            () -> m_elevator.runElevatorUp(),
-            () -> m_elevator.stop(),
-            m_elevator));
-        
         m_driverController.y.whenPressed(new RunElevator(m_elevator));
 
         m_driverController.dpad.up.whenPressed(new BumpElevatorUp(true, m_elevator));
+        m_driverController.dpad.down.whenPressed(new BumpElevatorDown(true, m_elevator));
 
         m_drive.setDefaultCommand(
                 new RunCommand(() -> m_drive.drive(
