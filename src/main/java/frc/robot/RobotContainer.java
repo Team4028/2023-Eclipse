@@ -16,6 +16,8 @@ import frc.robot.commands.auton.BeakAutonCommand;
 import frc.robot.commands.auton.TestPath;
 import frc.robot.commands.carriage.RunCarriageIn;
 import frc.robot.commands.carriage.RunCarriageOut;
+import frc.robot.commands.elevator.BumpElevatorUp;
+import frc.robot.commands.elevator.RunElevator;
 import frc.robot.commands.infeed.RunInfeed;
 import frc.robot.commands.infeed.RunOutfeed;
 import frc.robot.commands.infeed.ZeroSwitchblade;
@@ -72,7 +74,9 @@ public class RobotContainer {
             () -> m_elevator.stop(),
             m_elevator));
         
-        m_driverController.y.whenPressed(() -> m_elevator.runToPos(), m_elevator);
+        m_driverController.y.whenPressed(new RunElevator(m_elevator));
+
+        m_driverController.dpad.up.whenPressed(new BumpElevatorUp(true, m_elevator));
 
         m_drive.setDefaultCommand(
                 new RunCommand(() -> m_drive.drive(

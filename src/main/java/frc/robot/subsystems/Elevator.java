@@ -24,7 +24,10 @@ public class Elevator extends SubsystemBase {
     private static final int MM_CRUISE_VELOCITY = 5000;
     private static final int MM_ACCEL = 4000;
 
-    public static final double NU_PER_INCH = (28510 / 78.75);
+    private static final double NU_PER_INCH = (28510 / 78.75); // what
+
+    private static final double SMALL_BUMP = 1.;
+    private static final double BIG_BUMP = 2.;
 
     private int m_slot = UP_SLOT;
 
@@ -39,6 +42,10 @@ public class Elevator extends SubsystemBase {
             this.value = value;
         }
     }
+
+    private ElevatorPosition m_targetPresetPosition = ElevatorPosition.HOME;
+
+    private double m_targetPosition;
 
     private static Elevator m_instance;
 
@@ -63,13 +70,35 @@ public class Elevator extends SubsystemBase {
     }
 
     public void runToPos() {
-        m_elevatorMotor.setMotionMagicNU(30 * NU_PER_INCH, UP_SLOT);
-    }
+        // m_elevatorMotor.setMotionMagicNU(30 * NU_PER_INCH, UP_SLOT);
+        switch (m_targetPresetPosition) {
+            case HOME:
+                m_slot = UP_SLOT;
+                m_targetPresetPosition = ElevatorPosition.SWITCH;
+                break;
+            case SWITCH:
+                m_targetPresetPosition = ElevatorPosition.SCALE;
+                break;
+            default:
+                m_slot = DOWN_SLOT;
+                m_targetPresetPosition = ElevatorPosition.HOME;
+                break;
+        }
 
-    
+        m_targetPosition = m_targetPresetPosition.value;
+        System.out.println(m_targetPosition);
+    }
 
     public void runElevatorUp() {
         m_elevatorMotor.set(0.4);
+    }
+
+    public void bumpUp(boolean big) {
+        m_targetPosition += big ? BIG_BUMP : SMALL_BUMP;
+    }
+
+    public void bumpDown(boolean big) {
+        m_targetPosition -= big ? BIG_BUMP : SMALL_BUMP;
     }
 
     public void stop() {
@@ -86,6 +115,7 @@ public class Elevator extends SubsystemBase {
 
     @Override
     public void periodic() {
+        m_elevatorMotor.setMotionMagicNU(m_targetPosition * NU_PER_INCH, m_slot);
         // This method will be called once per scheduler run
     }
 }
