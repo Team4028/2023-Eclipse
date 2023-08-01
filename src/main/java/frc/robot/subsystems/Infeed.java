@@ -4,8 +4,8 @@
 
 package frc.robot.subsystems;
 
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.lib.beaklib.motor.BeakTalonSRX;
@@ -73,11 +73,17 @@ public class Infeed extends SubsystemBase {
         m_rightSwitchblade.setInverted(true);
         m_leftSwitchblade.setInverted(false);
 
-        m_rightSwitchblade.setPID(new BeakPIDConstants(0.5, 0., 5.0), 0);
-        m_leftSwitchblade.setPID(new BeakPIDConstants(0.5, 0., 5.), 0);
+        m_rightSwitchblade.setPID(new BeakPIDConstants(2.0, 0., 0., 0.3354));
+        m_leftSwitchblade.setPID(new BeakPIDConstants(2.0, 0., 0., 0.3354));
 
-        m_rightSwitchblade.setAllowedClosedLoopError(10., 0);
-        m_leftSwitchblade.setAllowedClosedLoopError(10., 0);
+        m_rightSwitchblade.setMotionMagicAcceleration(2000);
+        m_leftSwitchblade.setMotionMagicAcceleration(2000);
+
+        m_rightSwitchblade.setMotionMagicCruiseVelocity(3000);
+        m_leftSwitchblade.setMotionMagicCruiseVelocity(3000);
+
+        m_rightSwitchblade.setAllowedClosedLoopError(10.);
+        m_leftSwitchblade.setAllowedClosedLoopError(10.);
     }
 
     public void runToPosition() {
@@ -92,6 +98,10 @@ public class Infeed extends SubsystemBase {
                 m_infeedTargetState = InfeedTargetState.WIDE;
                 break;
         }
+    }
+
+    public Command runToPositionCommand() {
+        return runOnce(() -> runToPosition());
     }
 
     public void zeroSwitchblades() {
@@ -121,14 +131,9 @@ public class Infeed extends SubsystemBase {
         return !m_rightSwitchblade.getReverseLimitSwitch().Value;
     }
 
-    public void runInfeed() {
+    public void run(double vbus) {
         m_leftInfeed.set(0.5);
         m_rightInfeed.set(0.5);
-    }
-
-    public void runOutfeed() {
-        m_leftInfeed.set(-0.5);
-        m_rightInfeed.set(-0.5);
     }
 
     public void stop() {
@@ -137,15 +142,9 @@ public class Infeed extends SubsystemBase {
         m_rightInfeed.stopMotor();
     }
 
-    public Command runInfeedCommand() {
+    public Command infeedCommand(double vbus) {
         return startEnd(
-                () -> runInfeed(),
-                () -> stop());
-    }
-
-    public Command runOutfeedCommand() {
-        return startEnd(
-                () -> runOutfeed(),
+                () -> run(vbus),
                 () -> stop());
     }
 
@@ -171,8 +170,8 @@ public class Infeed extends SubsystemBase {
     public void periodic() {
         // This method will be called once per scheduler run
         if (m_infeedTargetState != InfeedTargetState.NONE && !m_homing) {
-            m_rightSwitchblade.setPositionMotorRotations(m_infeedTargetState.value / 360.);
-            m_leftSwitchblade.setPositionMotorRotations(m_infeedTargetState.value / 360.);
+            m_rightSwitchblade.setMotionMagicAngle(Rotation2d.fromDegrees(m_infeedTargetState.value));
+            m_leftSwitchblade.setMotionMagicAngle(Rotation2d.fromDegrees(m_infeedTargetState.value));
         }
     }
 }

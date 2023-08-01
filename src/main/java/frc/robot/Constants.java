@@ -5,6 +5,7 @@
 package frc.robot;
 
 import edu.wpi.first.math.controller.PIDController;
+import frc.lib.beaklib.units.Distance;
 
 /** Add your docs here. */
 public class Constants {
@@ -30,5 +31,9 @@ public class Constants {
 
     public static final class OIConstants {
         public static final int DRIVER = 0;
+    }
+
+    public static final class FieldConstants {
+        public static final Distance FIELD_WIDTH = new Distance(8.0137);
     }
 }

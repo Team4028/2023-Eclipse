@@ -7,10 +7,15 @@ package frc.robot.subsystems;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.beaklib.motor.BeakTalonSRX;
 import frc.lib.beaklib.pid.BeakPIDConstants;
+import frc.lib.beaklib.units.Distance;
 
+// 35:1
+// bruh: 1.79"
 public class Elevator extends SubsystemBase {
     private BeakTalonSRX m_elevatorMotor;
 
@@ -30,12 +35,10 @@ public class Elevator extends SubsystemBase {
     private static final double SMALL_BUMP = 1.;
     private static final double BIG_BUMP = 2.;
 
-    private int m_slot = UP_SLOT;
-
     public enum ElevatorPosition {
         HOME(0),
         SWITCH(30),
-        SCALE(80);
+        SCALE(75);
 
         int value;
 
@@ -62,26 +65,33 @@ public class Elevator extends SubsystemBase {
 
         m_elevatorMotor.setBrake(true);
 
-        m_elevatorMotor.setMotionMagicCruiseVelocity(MM_CRUISE_VELOCITY, 0);
-        m_elevatorMotor.setMotionMagicAcceleration(MM_ACCEL, 0);
+        m_elevatorMotor.setMotionMagicCruiseVelocity(MM_CRUISE_VELOCITY);
+        m_elevatorMotor.setMotionMagicAcceleration(MM_ACCEL);
 
-        m_elevatorMotor.setPID(HOLD_GAINS, HOLD_SLOT);
-        m_elevatorMotor.setPID(UP_GAINS, UP_SLOT);
-        m_elevatorMotor.setPID(DOWN_GAINS, DOWN_SLOT);
+        m_elevatorMotor.setSlot(HOLD_SLOT);
+        m_elevatorMotor.setPID(HOLD_GAINS);
+
+        m_elevatorMotor.setSlot(DOWN_SLOT);
+        m_elevatorMotor.setPID(DOWN_GAINS);
+
+        m_elevatorMotor.setSlot(UP_SLOT);
+        m_elevatorMotor.setPID(UP_GAINS);
+
+        // m_elevatorMotor.setEncoderGearRatio(35.);
+        m_elevatorMotor.setWheelDiameter(Distance.fromInches(1.79 * 2.)); // 15T #35 sprocket
     }
 
     public void runToPosition() {
-        // m_elevatorMotor.setMotionMagicNU(30 * NU_PER_INCH, UP_SLOT);
         switch (m_targetPresetPosition) {
             case HOME:
-                m_slot = UP_SLOT;
+                m_elevatorMotor.setSlot(UP_SLOT);
                 m_targetPresetPosition = ElevatorPosition.SWITCH;
                 break;
             case SWITCH:
                 m_targetPresetPosition = ElevatorPosition.SCALE;
                 break;
             default:
-                m_slot = DOWN_SLOT;
+                m_elevatorMotor.setSlot(DOWN_SLOT);
                 m_targetPresetPosition = ElevatorPosition.HOME;
                 break;
         }
@@ -89,13 +99,24 @@ public class Elevator extends SubsystemBase {
         m_targetPosition = m_targetPresetPosition.value;
     }
 
+    public Command runToPositionCommand() {
+        return runOnce(() -> runToPosition());
+    }
+
     public void bumpUp(boolean big) {
         m_targetPosition += big ? BIG_BUMP : SMALL_BUMP;
-        System.out.println(m_targetPosition);
+    }
+
+    public Command bumpUpCommand(boolean big) {
+        return runOnce(() -> bumpUp(big));
     }
 
     public void bumpDown(boolean big) {
         m_targetPosition -= big ? BIG_BUMP : SMALL_BUMP;
+    }
+
+    public Command bumpDownCommand(boolean big) {
+        return runOnce(() -> bumpDown(big));
     }
 
     public void stop() {
@@ -113,7 +134,11 @@ public class Elevator extends SubsystemBase {
     @Override
     public void periodic() {
         m_targetPosition = MathUtil.clamp(m_targetPosition, 0, 80); // FIXME: find max height.
-        m_elevatorMotor.setMotionMagicNU(m_targetPosition * NU_PER_INCH, m_slot);
+        // m_elevatorMotor.setMotionMagicNU(m_targetPosition * NU_PER_INCH);
+        m_elevatorMotor.setMotionMagic(Distance.fromInches(m_targetPosition));
+        SmartDashboard.putNumber("Target", m_targetPosition);
+        SmartDashboard.putNumber("Believed", m_elevatorMotor.getDistance(false).Value.getAsInches());
+        SmartDashboard.putNumber("Actual", m_elevatorMotor.getPositionNU(false).Value / NU_PER_INCH);
         // This method will be called once per scheduler run
     }
 }

@@ -4,37 +4,34 @@
 
 package frc.robot.subsystems;
 
-import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
-
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.lib.beaklib.motor.BeakTalonSRX;
 
 public class Carriage extends SubsystemBase {
-    private WPI_TalonSRX m_leftCarriage;
-    private WPI_TalonSRX m_rightCarriage;
+    private BeakTalonSRX m_leftCarriage;
+    private BeakTalonSRX m_rightCarriage;
+
     private static Carriage m_instance;
 
     /** Creates a new Carriage. */
     public Carriage() {
-        m_leftCarriage = new WPI_TalonSRX(8);
-        m_rightCarriage = new WPI_TalonSRX(9);
+        m_leftCarriage = new BeakTalonSRX(8);
+        m_rightCarriage = new BeakTalonSRX(9);
 
         m_leftCarriage.setInverted(false);
         m_rightCarriage.setInverted(true);
     }
 
-    public void runCarriageIn() {
-        m_leftCarriage.set(0.5);
-        m_rightCarriage.set(0.5);
+    public void runCarriage(double vbus) {
+        m_leftCarriage.set(vbus);
+        m_rightCarriage.set(vbus);
     }
 
-    public void runCarriageOut() {
-        m_leftCarriage.set(-0.5);
-        m_rightCarriage.set(-0.5);
-    }
-
-    public void stop() {
-        m_leftCarriage.stopMotor();
-        m_rightCarriage.stopMotor();
+    public Command runCarriageCommand(double vbus) {
+        return startEnd(
+                () -> runCarriage(vbus),
+                () -> runCarriage(0.));
     }
 
     public static Carriage getInstance() {

@@ -11,11 +11,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import frc.lib.beaklib.BeakXBoxController;
 import frc.robot.commands.auton.BeakAutonCommand;
-import frc.robot.commands.carriage.RunCarriageIn;
-import frc.robot.commands.carriage.RunCarriageOut;
-import frc.robot.commands.infeed.RunInfeed;
-import frc.robot.commands.infeed.RunOutfeed;
-import frc.robot.commands.infeed.ZeroSwitchblade;
 import frc.robot.subsystems.Carriage;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Elevator;
@@ -46,19 +41,19 @@ public class RobotContainer {
     }
 
     public void configureButtonBindings() {
-        m_driverController.a.onTrue(new ZeroSwitchblade(m_infeed));
-        m_driverController.b.onTrue(() -> m_infeed.runToPosition());
+        m_driverController.a.onTrue(m_infeed.zeroCommand());
+        m_driverController.b.onTrue(m_infeed.runToPositionCommand());
 
-        m_driverController.lt.whileTrue(new RunCarriageIn(m_carriage));
-        m_driverController.lt.whileTrue(new RunInfeed(m_infeed));
+        m_driverController.lt.whileTrue(m_carriage.runCarriageCommand(0.5));
+        m_driverController.lt.whileTrue(m_infeed.infeedCommand(0.5));
 
-        m_driverController.lb.toggleOnTrue(new RunCarriageOut(m_carriage));
-        m_driverController.lb.toggleOnTrue(new RunOutfeed(m_infeed));
+        m_driverController.lb.toggleOnTrue(m_carriage.runCarriageCommand(-0.5));
+        m_driverController.lb.toggleOnTrue(m_infeed.infeedCommand(-0.5));
 
-        m_driverController.y.onTrue(new RunElevator(m_elevator));
+        m_driverController.y.onTrue(m_elevator.runToPositionCommand());
 
-        m_driverController.dpad.up.onTrue(new BumpElevatorUp(true, m_elevator));
-        m_driverController.dpad.down.onTrue(new BumpElevatorDown(true, m_elevator));
+        m_driverController.dpadUp.onTrue(m_elevator.bumpUpCommand(true));
+        m_driverController.dpadDown.onTrue(m_elevator.bumpDownCommand(true));
 
         m_drive.setDefaultCommand(
                 new RunCommand(() -> m_drive.drive(
@@ -69,8 +64,6 @@ public class RobotContainer {
     }
 
     private void initAutonChooser() {
-        _autonChooser.setDefaultOption("Test Path 1", new TestPath(m_drive));
-
         SmartDashboard.putData("Auton Chooser", _autonChooser);
     }
 

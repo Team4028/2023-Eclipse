@@ -96,6 +96,8 @@ public class Drivetrain extends BeakDifferentialDrivetrain {
         m_left = new BeakMotorControllerGroup(m_FL, m_BL);
         m_right = new BeakMotorControllerGroup(m_FR, m_BR);
 
+        m_right.setInverted(true);
+
         super.setup(m_right, m_left, m_gyro);
     }
 
